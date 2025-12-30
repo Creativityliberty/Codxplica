@@ -4,24 +4,18 @@ const API_KEY = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const GEMINI_MODELS = {
-    // Gemini 3 Series (Preview)
-    GEMINI_3_PRO: "gemini-3-pro-preview",
-    GEMINI_3_FLASH: "gemini-3-flash-preview",
-    GEMINI_3_PRO_IMAGE: "gemini-3-pro-image-preview",
+    // Latest Experimental (Fast & Smart)
+    GEMINI_2_0_FLASH_EXP: "gemini-2.0-flash-exp",
 
-    // Gemini Flash Latest (Points to 2.5)
-    GEMINI_FLASH_LATEST: "gemini-flash-latest",
-    GEMINI_FLASH_LITE: "gemini-flash-lite-latest",
-
-    // Stable / Legacy
+    // Stable Production
     GEMINI_1_5_FLASH: "gemini-1.5-flash",
-    GEMINI_2_0_FLASH_EXP: "gemini-2.0-flash-exp"
+    GEMINI_1_5_PRO: "gemini-1.5-pro",
 };
 
 export class LLMService {
     private model: any;
 
-    constructor(modelName: string = GEMINI_MODELS.GEMINI_1_5_FLASH) {
+    constructor(modelName: string = GEMINI_MODELS.GEMINI_2_0_FLASH_EXP) {
         if (!API_KEY) {
             console.error("CRITICAL: GEMINI_API_KEY is missing in environment variables.");
         }

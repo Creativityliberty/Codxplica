@@ -25,7 +25,7 @@ export class TutorialEngine {
     private ingester: IngestService;
 
     constructor() {
-        this.llm = new LLMService(GEMINI_MODELS.GEMINI_3_FLASH);
+        this.llm = new LLMService(GEMINI_MODELS.GEMINI_2_0_FLASH_EXP);
         this.ingester = new IngestService();
     }
 
