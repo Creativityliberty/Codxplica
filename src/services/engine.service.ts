@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { LLMService } from "./llm.service";
+import { LLMService, GEMINI_MODELS } from "./llm.service";
 import { IngestService } from "./ingest.service";
 
 export interface Abstraction {
@@ -26,7 +26,7 @@ export class TutorialEngine {
     private ingester: IngestService;
 
     constructor() {
-        this.llm = new LLMService();
+        this.llm = new LLMService(GEMINI_MODELS.GEMINI_3_FLASH);
         this.ingester = new IngestService();
     }
 
@@ -38,7 +38,9 @@ export class TutorialEngine {
         }
 
         // 1. Ingest
-        const fullDigest = await this.ingester.ingest(source);
+        console.log("Starting ingestion...");
+        const githubToken = process.env.GITHUB_TOKEN?.replace(/['"]/g, "");
+        const fullDigest = await this.ingester.ingest(source, githubToken);
 
         // 2. Identify Abstractions
         console.log("Identifying abstractions...");

@@ -2,133 +2,95 @@
   "projectName": "Project",
   "abstractions": [
     {
-      "name": "Project",
-      "description": "Imagine a Project as your entire manga series. It holds all the information about your story, including the scenario (plot, characters, etc.) and the visual layout (pages and panels). It's like a folder that contains all the files and assets for your manga, allowing you to manage and develop your story from beginning to end. The Project also has an `updatedAt` timestamp, which is useful for managing when it was last modified.",
+      "name": "Project Data Model",
+      "description": "Like a master production binder for a manga series, this abstraction encapsulates the entire creative lifecycle. It holds the high-level narrative 'Scenario' (scripts, themes, characters) alongside the granular visual 'Pages' (panels, image prompts, and speech bubbles). By centralizing this state, the application ensures that AI-generated content in later stages, like storyboarding, remains contextually aware of the characters and plot points established in the initial writing phases.",
       "files": [
-        "App.tsx",
         "types.ts",
-        "components/MangaBoard.tsx",
-        "components/Checklist.tsx"
+        "App.tsx"
       ]
     },
     {
-      "name": "ScenarioData",
-      "description": "ScenarioData is like the script or outline for your manga chapter. It defines the story's key elements such as the title, theme, characters, plot, and dialogues. Think of it as the written foundation upon which you build the visual aspects of your manga. It includes properties for each step of the writing process, from character creation to cover description, guiding you through the story development workflow.",
+      "name": "Gemini AI Service",
+      "description": "Think of this as a tireless ghostwriter and storyboard assistant that lives in the cloud. It acts as the bridge between the user's raw ideas and structured creative output. It doesn't just process text; it understands the 'manga language'—translating a scene description into optimized image generation prompts, panel layouts, or dialogue suggestions. It uses specialized system instructions to maintain the tone and logic of a Japanese comic throughout the workflow.",
       "files": [
-        "App.tsx",
-        "types.ts",
+        "services/geminiService.ts"
+      ]
+    },
+    {
+      "name": "Scenario Pipeline",
+      "description": "This is a creative GPS that guides a writer through 11 mandatory waypoints. Instead of staring at a blank page, the author is prompted to define specific elements like 'Universe,' 'Key Events,' and 'Dialogues' in a logical sequence. Each step builds upon the last, ensuring that by the time the user reaches the drawing board, they have a robust architectural blueprint for their story, preventing the common 'writer's block' found in open-ended tools.",
+      "files": [
         "components/ScenarioWizard.tsx",
-        "components/AiChat.tsx"
-      ]
-    },
-    {
-      "name": "Page",
-      "description": "A Page is a single page in your manga. It contains multiple panels that make up the layout of the page. Think of it as a canvas that you divide into sections, each depicting a specific scene or action.  Each page is made up of panels, which define the visual storytelling on that page.",
-      "files": [
-        "types.ts",
-        "components/MangaBoard.tsx"
-      ]
-    },
-    {
-      "name": "Panel",
-      "description": "A Panel represents a single frame or section on a manga page. It contains a description (prompt) used to generate an image, and a collection of bubbles (dialogue or thoughts). Imagine it as a comic strip frame where the action happens, including the visual art and character's speech.",
-      "files": [
-        "types.ts",
-        "components/MangaBoard.tsx"
-      ]
-    },
-    {
-      "name": "Bubble",
-      "description": "A Bubble represents a speech or thought bubble within a panel. It contains the text spoken or thought by a character, and its type (speech, thought, etc.).  Think of it as a container for the text within a panel, complete with location and type info. These Bubbles let you determine placement, and type of text that should render. The AI determines actual text.",
-      "files": [
-        "types.ts",
-        "components/MangaBoard.tsx"
-      ]
-    },
-    {
-      "name": "AiChat",
-      "description": "AiChat is the component responsible for interacting with the AI (Gemini) to generate content. Think of it as a personal assistant that helps you brainstorm ideas, write descriptions, and refine your story. It's like a chat interface where you can ask questions and receive suggestions, powered by the AI model.",
-      "files": [
-        "components/AiChat.tsx"
-      ]
-    },
-    {
-      "name": "ViewState",
-      "description": "ViewState is a simple state management system for the application's current screen or mode. Think of it as a navigator that determines which part of the application you're currently viewing and interacting with, such as the dashboard, scenario editor, or storyboard.",
-      "files": [
-        "App.tsx",
         "types.ts"
       ]
     },
     {
-      "name": "GeminiService",
-      "description": "GeminiService encapsulates all the calls to the Google Gemini API.  Think of it as a dedicated service that facilitates communication with the remote AI model, handling tasks such as generating images, creating chat sessions, and summarizing text.  It keeps calls to the AI organized and reusable.",
+      "name": "Contextual AI Co-Pilot",
+      "description": "An interactive whiteboard session with a professional editor who has perfect memory. Unlike a standard chatbot, this abstraction is injected with the specific context of the current project step. It knows if you are brainstorming characters or fine-tuning a climax. It allows for a collaborative 'ping-pong' of ideas where the user can ask for suggestions and instantly 'apply' the AI’s draft directly into their project editor with one click.",
       "files": [
-        "services/geminiService.ts",
-        "components/AiChat.tsx",
-        "components/MangaBoard.tsx"
+        "components/AiChat.tsx"
+      ]
+    },
+    {
+      "name": "Visual Storyboard Engine",
+      "description": "A digital light table where the script takes physical form. This abstraction manages the hierarchical relationship between a Page, its Panels, and the interactive Speech Bubbles layered on top. It handles the complex logic of 'Ink Mode' (B&W vs Color), panel-specific AI image generation, and the drag-and-drop positioning of dialogue, effectively turning a text-based script into a visual medium that can be exported as a PDF or individual images.",
+      "files": [
+        "components/MangaBoard.tsx",
+        "types.ts"
+      ]
+    },
+    {
+      "name": "Mission Log Tracker",
+      "description": "Like a 'Quest Log' in a role-playing game, this abstraction tracks the completion status of the creative journey. It monitors the state of the Project Model to determine which of the 11 scenario steps are finished. It provides the user with a visual progress bar and a navigation shortcut to missing sections, ensuring that the necessary creative 'ingredients' are gathered before the final generation of a full chapter.",
+      "files": [
+        "components/Checklist.tsx"
       ]
     }
   ],
   "relationships": {
-    "summary": "The code represents an AI-powered manga creation application. The application allows users to define a manga project's scenario, create storyboards, and potentially generate manga pages. The `App.tsx` file is the main component that manages the application's state and navigation between different views (dashboard, scenario, storyboard). It uses components like `ScenarioWizard`, `MangaBoard`, and `Checklist` to provide different functionalities. The `AiChat.tsx` component provides a chat interface to interact with the Gemini AI model to generate content based on the current scenario step.",
+    "summary": "MangaForge AI is a creative platform designed for mangakas to transform ideas into structured storyboards. It utilizes a central project data model to track story progress across a multi-step scenario pipeline. An integrated AI co-pilot, powered by the Gemini service, provides contextual brainstorming assistance at each stage of development. The system features a visual storyboard engine for panel layouts and a mission log tracker to manage completion status and project milestones.",
     "relationships": [
       {
-        "from": "App",
-        "to": "ScenarioWizard",
-        "label": "renders"
+        "from": "Project Data Model",
+        "to": "Scenario Pipeline",
+        "label": "defines state structure for"
       },
       {
-        "from": "App",
-        "to": "MangaBoard",
-        "label": "renders"
+        "from": "Scenario Pipeline",
+        "to": "Project Data Model",
+        "label": "updates story attributes and script data"
       },
       {
-        "from": "App",
-        "to": "Checklist",
-        "label": "renders"
+        "from": "Contextual AI Co-Pilot",
+        "to": "Gemini AI Service",
+        "label": "requests content generation and brainstorming from"
       },
       {
-        "from": "ScenarioWizard",
-        "to": "ScenarioData",
-        "label": "uses"
+        "from": "Contextual AI Co-Pilot",
+        "to": "Scenario Pipeline",
+        "label": "provides step-specific creative suggestions within"
       },
       {
-        "from": "MangaBoard",
-        "to": "Project",
-        "label": "uses"
+        "from": "Visual Storyboard Engine",
+        "to": "Project Data Model",
+        "label": "renders and edits page and panel data from"
       },
       {
-        "from": "Project",
-        "to": "ScenarioData",
-        "label": "contains"
+        "from": "Mission Log Tracker",
+        "to": "Project Data Model",
+        "label": "monitors completion status of"
       },
       {
-        "from": "Project",
-        "to": "Page",
-        "label": "contains"
+        "from": "Mission Log Tracker",
+        "to": "Scenario Pipeline",
+        "label": "facilitates navigation to specific steps in"
       },
       {
-        "from": "Page",
-        "to": "Panel",
-        "label": "contains"
-      },
-      {
-        "from": "Panel",
-        "to": "Bubble",
-        "label": "contains"
-      },
-      {
-        "from": "AiChat",
-        "to": "GeminiService",
-        "label": "uses"
-      },
-      {
-        "from": "AiChat",
-        "to": "ScenarioData",
-        "label": "uses"
+        "from": "Gemini AI Service",
+        "to": "Project Data Model",
+        "label": "receives historical project context from"
       }
     ]
   },
-  "generatedAt": "2025-12-30T00:25:44.274Z"
+  "generatedAt": "2025-12-30T00:53:10.535Z"
 }

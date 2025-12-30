@@ -81,11 +81,23 @@ export default function DashboardPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  const downloadMarkdown = () => {
+    if (!result || !result.chapters) return;
+    const content = result.chapters.map((c: any) => `# ${c.title}\n\n${c.content}`).join("\n\n---\n\n");
+    const blob = new Blob([content], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${result.name.replace(/\s+/g, "_").toLowerCase()}_tutorial.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col items-center gap-12 px-6 pb-20">
-
-      {/* Dashboard Tabs */}
+      {/* ... tabs ... */}
       {!loading && !result && (
         <div className="flex gap-4 p-1 glass rounded-2xl">
           <button
@@ -246,10 +258,10 @@ export default function DashboardPage() {
             </div>
 
             <button
-              onClick={() => copyToClipboard(result.chapters.map((c: any) => `## ${c.title}\n\n${c.content}`).join("\n\n"))}
-              className="w-full py-5 bg-black dark:bg-white text-white dark:text-black rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:opacity-90"
+              onClick={downloadMarkdown}
+              className="w-full py-5 bg-black dark:bg-white text-white dark:text-black rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:scale-[1.02]"
             >
-              <Share2 size={16} /> Export Markdown Bundle
+              <Share2 size={16} /> Download Markdown Bundle
             </button>
           </div>
 

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TutorialEngine } from "@/services/engine.service";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId } = await auth();
-        if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Simulated Auth for Local SaaS
+        const userId = "local-admin";
 
         const { source, projectName, language } = await req.json();
 
@@ -14,13 +13,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Source is required" }, { status: 400 });
         }
 
-        // Ensure User exists in our DB (Sync with Clerk)
+        // Ensure User exists in our DB (Mock Sync)
         let user = await prisma.user.findUnique({ where: { clerkId: userId } });
         if (!user) {
             user = await prisma.user.create({
                 data: {
                     clerkId: userId,
-                    email: `${userId}@clerk.user`, // Temporary until we get real email from Clerk if needed
+                    email: `admin@codxplica.local`,
                 }
             });
         }

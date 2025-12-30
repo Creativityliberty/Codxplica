@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
     try {
-        const { userId } = await auth();
-        if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Simulated Auth
+        const userId = "local-admin";
 
-        const user = await prisma.user.findUnique({
+        let user = await prisma.user.findUnique({
             where: { clerkId: userId },
             include: {
                 projects: {
@@ -17,7 +16,15 @@ export async function GET() {
             }
         });
 
-        if (!user) return NextResponse.json([]);
+        if (!user) {
+            user = await prisma.user.create({
+                data: {
+                    clerkId: userId,
+                    email: `admin@codxplica.local`,
+                },
+                include: { projects: { include: { chapters: true } } }
+            });
+        }
 
         return NextResponse.json(user.projects);
     } catch (error) {

@@ -9,9 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.36.5",
     "@google/generative-ai": "^0.24.1",
-    "@prisma/client": "^7.2.0",
+    "@prisma/client": "^6.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/lodash": "^4.17.21",
     "axios": "^1.13.2",
@@ -20,7 +19,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
-    "prisma": "^7.2.0",
+    "prisma": "^6.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.4.0",
