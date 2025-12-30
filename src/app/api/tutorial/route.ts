@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TutorialEngine } from "@/services/engine.service";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
     try {
         // Simulated Auth for Local SaaS
-        const userId = "local-admin";
+        // Simulated Auth for Local SaaS
+        const userEmail = "admin@codxplica.local";
 
         const { source, projectName, language } = await req.json();
 
@@ -14,12 +16,11 @@ export async function POST(req: NextRequest) {
         }
 
         // Ensure User exists in our DB (Mock Sync)
-        let user = await prisma.user.findUnique({ where: { clerkId: userId } });
+        let user = await prisma.user.findUnique({ where: { email: userEmail } });
         if (!user) {
             user = await prisma.user.create({
                 data: {
-                    clerkId: userId,
-                    email: `admin@codxplica.local`,
+                    email: userEmail,
                 }
             });
         }
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
                 name: result.projectName,
                 sourceUrl: source,
                 userId: user.id,
+                abstractions: result.abstractions,
+                relationships: result.relationships,
                 chapters: {
                     create: result.chapters.map((c, i) => ({
                         title: c.title,

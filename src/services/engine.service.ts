@@ -4,6 +4,7 @@ import { LLMService, GEMINI_MODELS } from "./llm.service";
 import { IngestService } from "./ingest.service";
 
 export interface Abstraction {
+    [key: string]: any;
     name: string;
     description: string;
     files: string[];

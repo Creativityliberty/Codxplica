@@ -3,11 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
     try {
-        // Simulated Auth
-        const userId = "local-admin";
+        const userEmail = "admin@codxplica.local";
 
         let user = await prisma.user.findUnique({
-            where: { clerkId: userId },
+            where: { email: userEmail },
             include: {
                 projects: {
                     include: { chapters: true },
@@ -19,8 +18,7 @@ export async function GET() {
         if (!user) {
             user = await prisma.user.create({
                 data: {
-                    clerkId: userId,
-                    email: `admin@codxplica.local`,
+                    email: userEmail,
                 },
                 include: { projects: { include: { chapters: true } } }
             });

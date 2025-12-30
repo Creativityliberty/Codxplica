@@ -4,31 +4,32 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
   id        String    @id @default(cuid())
-  clerkId   String    @unique
   email     String    @unique
-  projects  Project[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  projects  Project[]
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  name        String
-  sourceUrl   String
-  summary     String?
-  language    String    @default("english")
-  status      String    @default("completed")
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  chapters    Chapter[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  name          String
+  sourceUrl     String
+  summary       String?
+  language      String    @default("english")
+  status        String    @default("completed")
+  userId        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  abstractions  Json?
+  relationships Json?
+  chapters      Chapter[]
+  user          User      @relation(fields: [userId], references: [id])
 }
 
 model Chapter {
@@ -36,7 +37,7 @@ model Chapter {
   title     String
   content   String
   order     Int
-  project   Project  @relation(fields: [projectId], references: [id])
   projectId String
   createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
 }
