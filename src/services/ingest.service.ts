@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+
 
 export interface IngestResult {
     summary: string;
@@ -12,47 +12,75 @@ export class IngestService {
      * @param source URL or local path
      * @param token Optional GitHub token
      */
-    async ingest(source: string, token?: string): Promise<string> {
+    async ingest(source: string, token: string = process.env.GITHUB_TOKEN || ""): Promise<string> {
         console.log(`Ingesting source: ${source}...`);
 
-        const args = [source, "--output", "-"]; // Output to STDOUT
-        if (token) {
-            args.push("--token", token);
+        // 1. Parse URL (e.g. https://github.com/owner/repo)
+        const match = source.match(/github\.com\/([^/]+)\/([^/]+)/);
+        if (!match) {
+            throw new Error("Invalid GitHub URL. Must be https://github.com/owner/repo");
+        }
+        const [, owner, repo] = match;
+
+        // 2. Fetch Repo Details to get default branch
+        const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Accept": "application/vnd.github.v3+json"
+            }
+        });
+
+        if (!repoRes.ok) {
+            throw new Error(`Failed to fetch repo info: ${repoRes.statusText}`);
+        }
+        const repoData = await repoRes.json();
+        const branch = repoData.default_branch || "main";
+
+        // 3. Fetch File Tree (Recursive)
+        const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Accept": "application/vnd.github.v3+json"
+            }
+        });
+
+        if (!treeRes.ok) {
+            throw new Error(`Failed to fetch file tree: ${treeRes.statusText}`);
         }
 
-        return new Promise((resolve, reject) => {
-            const child = spawn("gitingest", args);
-            let stdout = "";
-            let stderr = "";
+        const treeData = await treeRes.json();
+        const files = (treeData.tree as any[]).filter(f =>
+            f.type === "blob" &&
+            !f.path.includes(".png") &&
+            !f.path.includes(".jpg") &&
+            !f.path.includes(".ico") &&
+            !f.path.includes("lock") &&
+            !f.path.startsWith(".")
+        ).slice(0, 50); // Limit to 50 files for safety/speed in V0
 
-            child.stdout.on("data", (data) => {
-                stdout += data.toString();
-            });
+        // 4. Fetch Content (Parallel)
+        const contents = await Promise.all(files.map(async (file) => {
+            try {
+                // Use raw.githubusercontent for content or blob API
+                // Blob API is safer with token for private repos
+                const blobRes = await fetch(file.url, { // Note: file.url is the git blob API url
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/vnd.github.v3.raw" // Asking for raw gets the content directly
+                    }
+                });
 
-            child.stderr.on("data", (data) => {
-                stderr += data.toString();
-            });
+                if (!blobRes.ok) return "";
+                const text = await blobRes.text();
+                return `\n\n--- ${file.path} ---\n\n${text}`;
+            } catch (err) {
+                console.warn(`Failed to fetch ${file.path}`, err);
+                return "";
+            }
+        }));
 
-            child.on("close", (code) => {
-                if (code !== 0) {
-                    console.error("Gitingest Error Details:", stderr);
-                    reject(new Error(`Gitingest failed with code ${code}: ${stderr}`));
-                    return;
-                }
-
-                if (!stdout) {
-                    reject(new Error("Gitingest returned no output"));
-                    return;
-                }
-
-                resolve(stdout);
-            });
-
-            child.on("error", (err) => {
-                console.error("Spawn Error:", err);
-                reject(err);
-            });
-        });
+        const digest = `Repository: ${owner}/${repo}\nBranch: ${branch}\n\n` + contents.join("");
+        return digest;
     }
 
     /**
