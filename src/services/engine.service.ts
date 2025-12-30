@@ -1,5 +1,3 @@
-import path from "path";
-import fs from "fs";
 import { LLMService, GEMINI_MODELS } from "./llm.service";
 import { IngestService } from "./ingest.service";
 
@@ -32,11 +30,9 @@ export class TutorialEngine {
     }
 
     async generateTutorial(source: string, projectName: string, language: string = "english") {
-        // 0. Prepare output directory
-        const outputDir = path.join(process.cwd(), "tutorials", projectName.replace(/\s+/g, "_").toLowerCase());
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
+        // 0. Preparation (File system ops removed for Serverless compatibility)
+        // const outputDir = ... (removed)
+
 
         // 1. Ingest
         console.log("Starting ingestion...");
@@ -63,26 +59,18 @@ export class TutorialEngine {
             )
         );
 
-        // Save chapters to disk
-        for (const chapter of chapters) {
-            fs.writeFileSync(path.join(outputDir, chapter.filename), chapter.content);
-        }
-
-        // Save metadata
-        fs.writeFileSync(path.join(outputDir, "metadata.json"), JSON.stringify({
-            projectName,
-            abstractions,
-            relationships,
-            generatedAt: new Date().toISOString()
-        }, null, 2));
+        // Note: We no longer write to the filesystem here because Vercel/Serverless environments are read-only.
+        // The data is returned and persisted to the Postgres database by the API route.
 
         return {
             projectName,
             abstractions,
             relationships,
             chapters,
-            outputPath: outputDir
+            outputPath: "db-persisted" // Changed to indicate DB persistence
         };
+
+
     }
 
     private async identifyAbstractions(digest: string, projectName: string, language: string): Promise<Abstraction[]> {
