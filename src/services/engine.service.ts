@@ -1,4 +1,4 @@
-import { LLMService, GEMINI_MODELS } from "./llm.service";
+import { LLMService, GEMINI_MODELS, OPENROUTER_MODELS, LLMProvider } from "./llm.service";
 import { IngestService } from "./ingest.service";
 
 export interface Abstraction {
@@ -20,13 +20,33 @@ export interface Chapter {
     filename: string;
 }
 
+export interface TutorialEngineOptions {
+    provider?: LLMProvider;
+    model?: string;
+}
+
 export class TutorialEngine {
     private llm: LLMService;
     private ingester: IngestService;
+    private provider: LLMProvider;
+    private model: string;
 
-    constructor() {
-        this.llm = new LLMService(GEMINI_MODELS.GEMINI_2_0_FLASH_EXP);
+    constructor(options: TutorialEngineOptions = {}) {
+        this.provider = options.provider || "gemini";
+
+        // Définir le modèle par défaut selon le provider
+        if (options.model) {
+            this.model = options.model;
+        } else {
+            this.model = this.provider === "openrouter"
+                ? OPENROUTER_MODELS.DEEPSEEK_R1_FREE
+                : GEMINI_MODELS.GEMINI_2_0_FLASH_EXP;
+        }
+
+        this.llm = new LLMService(this.model, this.provider);
         this.ingester = new IngestService();
+
+        console.log(`TutorialEngine initialized with provider: ${this.provider}, model: ${this.model}`);
     }
 
     async generateTutorial(source: string, projectName: string, language: string = "english") {
@@ -67,7 +87,9 @@ export class TutorialEngine {
             abstractions,
             relationships,
             chapters,
-            outputPath: "db-persisted" // Changed to indicate DB persistence
+            outputPath: "db-persisted", // Changed to indicate DB persistence
+            provider: this.provider,
+            model: this.model,
         };
 
 

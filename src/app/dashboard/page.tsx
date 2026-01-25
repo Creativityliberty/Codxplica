@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Terminal, Send, Loader2, Sparkles, BookOpen,
   Layers, Copy, Check, ChevronRight,
-  Maximize2, Share2, Search, Code2, Clock
+  Maximize2, Share2, Search, Code2, Clock, Cpu, Zap
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -13,6 +13,33 @@ import { twMerge } from "tailwind-merge";
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// Configuration des providers et modèles
+const PROVIDERS = {
+  gemini: {
+    name: "Google Gemini",
+    icon: Sparkles,
+    models: [
+      { id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash Exp", description: "Rapide et intelligent" },
+      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", description: "Stable, rapide" },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", description: "Plus puissant" },
+    ],
+  },
+  openrouter: {
+    name: "OpenRouter (Gratuit)",
+    icon: Zap,
+    models: [
+      { id: "deepseek/deepseek-r1:free", name: "DeepSeek R1", description: "Reasoning, excellent pour l'analyse" },
+      { id: "deepseek/deepseek-chat:free", name: "DeepSeek Chat", description: "Chat rapide et efficace" },
+      { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", description: "Tres puissant, 70B params" },
+      { id: "meta-llama/llama-3.2-3b-instruct:free", name: "Llama 3.2 3B", description: "Leger et rapide" },
+      { id: "qwen/qwen-2.5-72b-instruct:free", name: "Qwen 2.5 72B", description: "Excellent pour le code" },
+      { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B", description: "Par Google, equilibre" },
+      { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", description: "Francais, rapide" },
+      { id: "microsoft/phi-3-medium-128k-instruct:free", name: "Phi-3 Medium", description: "Par Microsoft, 128k context" },
+    ],
+  },
+};
 
 const STEPS = [
   { id: "ingest", label: "Analysing Files", icon: Search },
@@ -31,6 +58,10 @@ export default function DashboardPage() {
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState<"new" | "history">("new");
+
+  // Nouveaux états pour provider et modèle
+  const [provider, setProvider] = useState<"gemini" | "openrouter">("openrouter");
+  const [model, setModel] = useState(PROVIDERS.openrouter.models[0].id);
 
   // Fetch past projects
   useEffect(() => {
@@ -52,6 +83,11 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [loading]);
 
+  // Mettre à jour le modèle quand le provider change
+  useEffect(() => {
+    setModel(PROVIDERS[provider].models[0].id);
+  }, [provider]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -62,7 +98,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/tutorial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, projectName }),
+        body: JSON.stringify({ source, projectName, provider, model }),
       });
 
       const data = await response.json();
@@ -156,6 +192,61 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* Sélection du Provider */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted ml-1">AI Provider</label>
+              <div className="grid grid-cols-2 gap-3">
+                {(Object.keys(PROVIDERS) as Array<keyof typeof PROVIDERS>).map((key) => {
+                  const p = PROVIDERS[key];
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setProvider(key)}
+                      className={cn(
+                        "p-4 rounded-2xl border-2 transition-all flex items-center gap-3",
+                        provider === key
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-transparent bg-secondary/30 hover:border-primary/30"
+                      )}
+                    >
+                      <Icon size={20} />
+                      <div className="text-left">
+                        <div className="font-bold text-sm">{p.name}</div>
+                        {key === "openrouter" && (
+                          <div className="text-[10px] text-green-500 font-bold">GRATUIT</div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sélection du Modèle */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted ml-1">
+                Model <span className="text-primary">({PROVIDERS[provider].models.length} disponibles)</span>
+              </label>
+              <div className="relative">
+                <Cpu size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-full bg-secondary/30 border-none rounded-2xl py-5 pl-12 pr-4 focus:ring-2 focus:ring-primary outline-none font-bold appearance-none cursor-pointer"
+                >
+                  {PROVIDERS[provider].models.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} - {m.description}
+                    </option>
+                  ))}
+                </select>
+                <ChevronRight size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted rotate-90 pointer-events-none" />
+              </div>
+            </div>
+
             <button className="w-full py-6 bg-primary text-white rounded-3xl font-black uppercase tracking-widest text-sm shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
               <Send size={20} /> Generate Now
             </button>

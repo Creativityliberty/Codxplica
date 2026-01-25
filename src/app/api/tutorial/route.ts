@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { TutorialEngine } from "@/services/engine.service";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { LLMProvider } from "@/services/llm.service";
 
 export async function POST(req: NextRequest) {
     try {
         // Simulated Auth for Local SaaS
-        // Simulated Auth for Local SaaS
         const userEmail = "admin@codxplica.local";
 
-        const { source, projectName, language } = await req.json();
+        const { source, projectName, language, provider, model } = await req.json();
 
         if (!source) {
             return NextResponse.json({ error: "Source is required" }, { status: 400 });
@@ -25,7 +25,11 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        const engine = new TutorialEngine();
+        // Créer le TutorialEngine avec le provider et modèle choisis
+        const engine = new TutorialEngine({
+            provider: (provider as LLMProvider) || "gemini",
+            model: model || undefined,
+        });
         const result = await engine.generateTutorial(source, projectName || "Project", language || "english");
 
         // Save Project to DB
