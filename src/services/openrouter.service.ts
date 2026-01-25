@@ -3,7 +3,6 @@
  * Documentation: https://openrouter.ai/docs
  */
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 // Modèles gratuits disponibles sur OpenRouter
@@ -82,8 +81,13 @@ export class OpenRouterService {
     private model: string;
 
     constructor(modelName: string = OPENROUTER_MODELS.DEEPSEEK_R1_FREE) {
-        this.apiKey = OPENROUTER_API_KEY;
+        // Lire la clé directement au moment de la construction (important pour Vercel)
+        this.apiKey = process.env.OPENROUTER_API_KEY || "";
         this.model = modelName;
+
+        // Debug log (masqué partiellement pour la sécurité)
+        const keyPreview = this.apiKey ? `${this.apiKey.slice(0, 10)}...${this.apiKey.slice(-4)}` : "MISSING";
+        console.log(`[OpenRouter] Initializing with model: ${this.model}, API Key: ${keyPreview}`);
 
         if (!this.apiKey) {
             console.error("CRITICAL: OPENROUTER_API_KEY is missing in environment variables.");
@@ -91,7 +95,14 @@ export class OpenRouterService {
     }
 
     async generateContent(prompt: string): Promise<string> {
+        // Vérification de la clé avant l'appel
+        if (!this.apiKey) {
+            throw new Error("OPENROUTER_API_KEY is not configured. Please add it to your environment variables.");
+        }
+
         try {
+            console.log(`[OpenRouter] Calling API with model: ${this.model}`);
+
             const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
                 method: "POST",
                 headers: {
@@ -115,6 +126,7 @@ export class OpenRouterService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                console.error(`[OpenRouter] API Error: ${response.status}`, errorData);
                 throw new Error(`OpenRouter API Error: ${response.status} - ${JSON.stringify(errorData)}`);
             }
 
