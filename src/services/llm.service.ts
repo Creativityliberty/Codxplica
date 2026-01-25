@@ -1,7 +1,11 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { OpenRouterService, OPENROUTER_MODELS, FREE_MODELS_LIST } from "./openrouter.service";
 
 const API_KEY = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
+
+// Types de providers disponibles
+export type LLMProvider = "gemini" | "openrouter";
 
 export const GEMINI_MODELS = {
     // Latest Experimental (Fast & Smart)
@@ -12,23 +16,49 @@ export const GEMINI_MODELS = {
     GEMINI_1_5_PRO: "gemini-1.5-pro",
 };
 
+// Réexporter les modèles OpenRouter pour faciliter l'accès
+export { OPENROUTER_MODELS, FREE_MODELS_LIST };
+
+// Liste des modèles Gemini pour le frontend
+export const GEMINI_MODELS_LIST = [
+    { id: GEMINI_MODELS.GEMINI_2_0_FLASH_EXP, name: "Gemini 2.0 Flash Exp", description: "Rapide et intelligent" },
+    { id: GEMINI_MODELS.GEMINI_1_5_FLASH, name: "Gemini 1.5 Flash", description: "Stable, rapide" },
+    { id: GEMINI_MODELS.GEMINI_1_5_PRO, name: "Gemini 1.5 Pro", description: "Plus puissant" },
+];
+
 export class LLMService {
     private model: any;
+    private provider: LLMProvider;
+    private openRouterService?: OpenRouterService;
 
-    constructor(modelName: string = GEMINI_MODELS.GEMINI_2_0_FLASH_EXP) {
-        if (!API_KEY) {
-            console.error("CRITICAL: GEMINI_API_KEY is missing in environment variables.");
+    constructor(
+        modelName: string = GEMINI_MODELS.GEMINI_2_0_FLASH_EXP,
+        provider: LLMProvider = "gemini"
+    ) {
+        this.provider = provider;
+
+        if (provider === "openrouter") {
+            this.openRouterService = new OpenRouterService(modelName);
+        } else {
+            // Gemini (default)
+            if (!API_KEY) {
+                console.error("CRITICAL: GEMINI_API_KEY is missing in environment variables.");
+            }
+            this.model = genAI.getGenerativeModel({
+                model: modelName,
+            });
         }
-        this.model = genAI.getGenerativeModel({
-            model: modelName,
-        });
     }
 
     async generateContent(prompt: string, useCache: boolean = true): Promise<string> {
         // Note: Caching logic can be implemented here using Bun's native SQLite if needed.
-        // For now, we'll focus on the core functionality.
 
         try {
+            if (this.provider === "openrouter" && this.openRouterService) {
+                return await this.openRouterService.generateContent(prompt);
+            }
+
+            // Gemini (default)
             const result = await this.model.generateContent(prompt);
             const response = await result.response;
             return response.text();
@@ -39,6 +69,11 @@ export class LLMService {
     }
 
     async generateStructuredContent<T>(prompt: string, schema: any): Promise<T> {
+        // Si OpenRouter, utiliser directement son service avec parsing amélioré
+        if (this.provider === "openrouter" && this.openRouterService) {
+            return await this.openRouterService.generateStructuredContent<T>(prompt, schema);
+        }
+
         const structuredPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a valid JSON object (or array) matching this schema: ${JSON.stringify(schema)}. Do not include Markdown formatting or explanations.`;
         const response = await this.generateContent(structuredPrompt);
 
@@ -49,11 +84,10 @@ export class LLMService {
             // Remove markdown code blocks if present
             jsonStr = jsonStr.replace(/^```(json)?|```$/g, "");
 
-            // Find first '{' or '[' and last '}' or ']'
-            const firstOpen = jsonStr.search(/[{[]/);
-            const lastClose = jsonStr.search(/[}\]]$/); // Search from end usually, but regex searches from start.
+            // Remove <think> tags (for reasoning models like DeepSeek R1)
+            jsonStr = jsonStr.replace(/<think>[\s\S]*?<\/think>/g, "");
 
-            // Better approach: simple substring search
+            // Find first '{' or '[' and last '}' or ']'
             const firstBrace = jsonStr.indexOf('{');
             const firstBracket = jsonStr.indexOf('[');
             const start = (firstBrace === -1) ? firstBracket : (firstBracket === -1) ? firstBrace : Math.min(firstBrace, firstBracket);
